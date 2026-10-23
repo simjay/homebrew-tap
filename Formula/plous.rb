@@ -2,7 +2,6 @@ class Plous < Formula
   desc "Kubernetes lifecycle tool for your terminal"
   homepage "https://github.com/simjay/plous"
   url "https://github.com/simjay/plous/archive/refs/tags/v0.0.2.tar.gz"
-  version "0.0.2"
   sha256 "cdf98410440abac6d8fb0b845cd2e4155c79e6d02e18a63296595565be1e3fe0"
   license "Apache-2.0"
 
