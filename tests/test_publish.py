@@ -66,9 +66,27 @@ class PublicationTests(unittest.TestCase):
             with self.subTest(current=current), self.assertRaises(ValueError):
                 self.validate(current)
 
+    def test_formula_version_comes_from_the_release_source(self):
+        formula = ('  url "https://github.com/simjay/plous/archive/refs/tags/v0.0.10.tar.gz"\n'
+                   '  bottle do\n    root_url "https://example.com/bottles"\n  end\n')
+        self.assertEqual(publish.formula_version(formula), "0.0.10")
+        self.assertEqual(self.validate(publish.formula_version(formula.replace("0.0.10", "0.0.1"))),
+                         (7, "abc"))
+        with self.assertRaises(ValueError):
+            self.validate(publish.formula_version(formula))
+
+    def test_unknown_ambiguous_or_overridden_formula_versions_are_rejected(self):
+        source_url = '  url "https://github.com/simjay/plous/archive/refs/tags/v0.0.2.tar.gz"\n'
+        for formula in ['  version "0.0.2"\n', source_url * 2,
+                        source_url.replace("simjay/plous", "other/plous"),
+                        source_url.replace("v0.0.2", "v0.0.2-rc.1"),
+                        source_url + '  version "0.0.3"\n',
+                        source_url + '  version "0.0.2"\n']:
+            with self.subTest(formula=formula), self.assertRaises(ValueError):
+                publish.formula_version(formula)
+
     def test_all_four_bottles_must_exist_and_match_the_release(self):
-        formula = ('  version "0.0.2"\n'
-                   '  url "https://github.com/simjay/plous/archive/refs/tags/v0.0.2.tar.gz"\n')
+        formula = '  url "https://github.com/simjay/plous/archive/refs/tags/v0.0.2.tar.gz"\n'
         artifacts = [{"name": f"bottles_{name}", "expired": False} for name in
                      ["macos-15", "macos-15-intel", "ubuntu-24.04", "ubuntu-24.04-arm"]]
         publish.verify_packages("v0.0.2", formula, artifacts)

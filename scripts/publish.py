@@ -12,9 +12,17 @@ def api(path):
     return json.loads(subprocess.check_output(["gh", "api", path], text=True))
 
 
+def formula_version(formula):
+    versions = re.findall(
+        r'^  url "https://github\.com/simjay/plous/archive/refs/tags/v([0-9]+\.[0-9]+\.[0-9]+)\.tar\.gz"$',
+        formula, re.MULTILINE)
+    if len(versions) != 1 or re.search(r"^\s*version\b", formula, re.MULTILINE):
+        raise ValueError("Formula must infer its version from one Plous release source URL")
+    return versions[0]
+
+
 def verify_packages(tag, formula, artifacts):
-    if (f'  version "{tag[1:]}"\n' not in formula
-            or f'  url "https://github.com/simjay/plous/archive/refs/tags/{tag}.tar.gz"\n' not in formula):
+    if formula_version(formula) != tag[1:]:
         raise ValueError("Formula version and source URL must match the release branch")
     expected = {f"bottles_{os_name}" for os_name in
                 ["macos-15", "macos-15-intel", "ubuntu-24.04", "ubuntu-24.04-arm"]}
@@ -90,11 +98,7 @@ def main():
     current = None
     if any(entry["path"] == "Formula/plous.rb" for entry in root["tree"]):
         content = api(f"repos/{repo}/contents/Formula/plous.rb?ref=main")
-        match = re.search(r'^  version "([0-9]+\.[0-9]+\.[0-9]+)"$',
-                          base64.b64decode(content["content"]).decode(), re.MULTILINE)
-        if not match:
-            raise ValueError("Published formula is missing its version")
-        current = match[1]
+        current = formula_version(base64.b64decode(content["content"]).decode())
     number, sha = validate(repo, pr, runs[0], files, release, current)
     with open(os.environ["GITHUB_OUTPUT"], "a") as output:
         output.write(f"pull_request={number}\nhead_sha={sha}\n")
