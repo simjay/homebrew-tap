@@ -85,13 +85,14 @@ class PublicationTests(unittest.TestCase):
             with self.subTest(formula=formula), self.assertRaises(ValueError):
                 publish.formula_version(formula)
 
-    def test_all_four_bottles_must_exist_and_match_the_release(self):
+    def test_all_supported_bottles_must_exist_and_match_the_release(self):
         formula = '  url "https://github.com/simjay/plous/archive/refs/tags/v0.0.2.tar.gz"\n'
         artifacts = [{"name": f"bottles_{name}", "expired": False} for name in
-                     ["macos-15", "macos-15-intel", "ubuntu-24.04", "ubuntu-24.04-arm"]]
+                     ["macos-15", "ubuntu-24.04", "ubuntu-24.04-arm"]]
         publish.verify_packages("v0.0.2", formula, artifacts)
-        with self.assertRaises(ValueError):
-            publish.verify_packages("v0.0.2", formula, artifacts[:-1])
+        for missing in artifacts:
+            with self.subTest(missing=missing["name"]), self.assertRaisesRegex(ValueError, missing["name"]):
+                publish.verify_packages("v0.0.2", formula, [item for item in artifacts if item != missing])
         artifacts[-1]["expired"] = True
         with self.assertRaises(ValueError):
             publish.verify_packages("v0.0.2", formula, artifacts)

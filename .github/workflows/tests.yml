@@ -22,7 +22,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [macos-15, macos-15-intel]
+        os: [macos-15]
         include:
           - os: ubuntu-24.04
             container:
@@ -63,6 +63,14 @@ jobs:
         run: PYTHONDONTWRITEBYTECODE=1 python3 -m unittest discover -s tests -v
       - run: brew test-bot --only-formulae
         if: github.event_name == 'pull_request'
+
+      - name: Require release bottle outputs
+        if: github.event_name == 'pull_request' && startsWith(github.head_ref, 'plous-v')
+        run: |
+          if ! compgen -G 'plous--*.bottle*.tar.gz' >/dev/null || ! compgen -G 'plous--*.bottle.json' >/dev/null; then
+            echo '::error::The release build did not produce a Plous bottle and its metadata. Check test-bot for skipped builds.'
+            exit 1
+          fi
 
       - name: Upload bottles as artifact
         if: always() && github.event_name == 'pull_request' && hashFiles('*.bottle.*') != ''

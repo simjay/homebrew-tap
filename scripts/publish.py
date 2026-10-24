@@ -25,10 +25,11 @@ def verify_packages(tag, formula, artifacts):
     if formula_version(formula) != tag[1:]:
         raise ValueError("Formula version and source URL must match the release branch")
     expected = {f"bottles_{os_name}" for os_name in
-                ["macos-15", "macos-15-intel", "ubuntu-24.04", "ubuntu-24.04-arm"]}
+                ["macos-15", "ubuntu-24.04", "ubuntu-24.04-arm"]}
     available = {item["name"] for item in artifacts if not item["expired"]}
-    if not expected <= available:
-        raise ValueError("All four tested bottle artifacts must be available")
+    missing = sorted(expected - available)
+    if missing:
+        raise ValueError("Missing tested bottle artifacts: " + ", ".join(missing))
 
 
 def validate(repo, pr, run, files, release, current_version=None):
