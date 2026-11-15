@@ -5,6 +5,13 @@ class Plous < Formula
   sha256 "25e531b7736bc4a0eea4f067598954e3251b7c375983a5eefc80f523ac871c68"
   license "Apache-2.0"
 
+  bottle do
+    root_url "https://github.com/simjay/homebrew-tap/releases/download/plous-0.0.5"
+    sha256 cellar: :any_skip_relocation, arm64_sequoia: "d54538217758b1fe98e5d70029f77a993cdde1d7953b98bb3820ffd0fa07d749"
+    sha256 cellar: :any_skip_relocation, arm64_linux:   "e3f24cf61f0aa053a10d0b86b1333a5e9c1b83d8c27dd5eb14f8ed19a06a1fee"
+    sha256 cellar: :any_skip_relocation, x86_64_linux:  "9fd614030cb144620e491b66e928f2ac73e322982cc2aa4342b8ccbd8659a8ef"
+  end
+
   depends_on "go@1.26" => :build
 
   def install
